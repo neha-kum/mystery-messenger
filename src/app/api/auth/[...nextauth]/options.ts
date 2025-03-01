@@ -5,7 +5,7 @@ import dbConnect from "@/lib/dbConnect"; //to check if user registered
 import UserModel from "@/model/User";
 
 //export so that we can use it in route.ts 
-export const authOptiond : NextAuthOptions = {
+export const authOptions : NextAuthOptions = {
     providers: [
         CredentialsProvider({
             id: "credentials",
@@ -46,19 +46,28 @@ export const authOptiond : NextAuthOptions = {
     }),
     ],
     callbacks: {
-        async session({ session, token }) { //removed user bcuz nextauth user very basic whereas we made custom user
-          return session
-        },
+        
         async jwt({ token, user}) {
-            if(user){
+            if(user){  //iserting data into token so we don't hv to query database again and again
                 token.id = user._id?.toString()
-                
+                token.isVerified = user.isVerified
+                token.isAcceptingMessages = user.isAcceptingMessages
+                token.username = user.username
             }
           return token
+        },
+        async session({ session, token }) { //removed user bcuz nextauth user very basic whereas we made custom user
+            if(token){
+                session.user._id = token._id
+                session.user.isVerified = token.isVerified
+                session.user.isAcceptingMessages = token.isAcceptingMessages
+                session.user.username = token.username 
+            }
+          return session
         }
     },
     pages : {
-        signIn: 'sign-in' //sign-in control goes to next auth->design sign-in page by itself
+        signIn: '/sign-in' //sign-in control goes to next auth->design sign-in page by itself
     },
     session : {
         strategy : "jwt"
